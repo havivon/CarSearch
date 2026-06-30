@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarSearch — חיפוש רכבים מכל האתרים</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🚗</span>
+      <div>
+        <h1>CarSearch</h1>
+        <p class="tagline">מודעות רכב מיד2, WinWin, Marketplace ועוד — בחיפוש אחד</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="filters">
+      <form id="search-form">
+        <h2>חיפוש לפי מאפיינים</h2>
+
+        <label>יצרן
+          <input type="text" name="make" list="makes" placeholder="לדוגמה: מאזדה" />
+        </label>
+        <datalist id="makes">
+          <option value="מאזדה"></option><option value="טויוטה"></option>
+          <option value="יונדאי"></option><option value="קיה"></option>
+          <option value="סקודה"></option><option value="פולקסווגן"></option>
+          <option value="מיצובישי"></option><option value="ניסאן"></option>
+          <option value="הונדה"></option><option value="סוזוקי"></option>
+        </datalist>
+
+        <label>דגם
+          <input type="text" name="model" placeholder="לדוגמה: 3 / קורולה" />
+        </label>
+
+        <div class="row">
+          <label>שנה מ-
+            <input type="number" name="yearMin" min="1990" max="2026" placeholder="2015" />
+          </label>
+          <label>עד
+            <input type="number" name="yearMax" min="1990" max="2026" placeholder="2022" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>מחיר מ-
+            <input type="number" name="priceMin" min="0" step="1000" placeholder="30000" />
+          </label>
+          <label>עד
+            <input type="number" name="priceMax" min="0" step="1000" placeholder="120000" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>ק"מ עד
+            <input type="number" name="kmMax" min="0" step="5000" placeholder="120000" />
+          </label>
+          <label>יד עד
+            <input type="number" name="handMax" min="1" max="10" placeholder="2" />
+          </label>
+        </div>
+
+        <label>אזור / עיר
+          <input type="text" name="city" placeholder="לדוגמה: תל אביב" />
+        </label>
+
+        <label>חיפוש חופשי
+          <input type="text" name="text" placeholder="מילות מפתח..." />
+        </label>
+
+        <fieldset class="sources">
+          <legend>אתרים</legend>
+          <div id="source-list"><!-- filled by JS --></div>
+        </fieldset>
+
+        <label>מיון
+          <select name="sort">
+            <option value="price_asc">מחיר — מהזול ליקר</option>
+            <option value="price_desc">מחיר — מהיקר לזול</option>
+            <option value="year_desc">שנה — מהחדש לישן</option>
+            <option value="km_asc">ק"מ — מהנמוך לגבוה</option>
+          </select>
+        </label>
+
+        <button type="submit" id="search-btn">🔎 חפש בכל האתרים</button>
+      </form>
+    </aside>
+
+    <section class="results">
+      <div id="status-bar" class="status-bar"></div>
+      <div id="results-grid" class="grid">
+        <div class="empty-state">
+          <p>הזינו מאפיינים ולחצו <strong>חפש</strong> כדי לקבל מודעות מכל האתרים יחד.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>מצרף תוצאות ממספר מקורות. נתונים מסומנים כ"דוגמה" כאשר המקור החי חסום או דורש התחברות.</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

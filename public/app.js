@@ -1,67 +1,85 @@
-// Frontend logic: load sources, run searches, render results.
+// Frontend logic.
+// Primary feature: build a ready-made search link per site and show big,
+// tap-friendly buttons. Secondary: an aggregated demo/live results view.
 
 const form = document.getElementById("search-form");
-const sourceList = document.getElementById("source-list");
+const linksArea = document.getElementById("links-area");
 const statusBar = document.getElementById("status-bar");
 const grid = document.getElementById("results-grid");
-const searchBtn = document.getElementById("search-btn");
+const linksBtn = document.getElementById("links-btn");
+const demoBtn = document.getElementById("demo-btn");
 
-const STATUS_LABEL = {
-  ok: "חי",
-  fallback: "דוגמה",
-  blocked: "חסום",
-  error: "שגיאה",
-  auth_required: "דורש התחברות",
+const MODE_LABEL = {
+  native: "חיפוש מסונן",
+  "site-search": "חיפוש ממוקד באתר",
 };
-
-// Load the available sources and render checkboxes (all checked by default).
-async function loadSources() {
-  try {
-    const res = await fetch("/api/sources");
-    const { sources } = await res.json();
-    sourceList.innerHTML = sources
-      .map(
-        (s) => `
-      <label class="source-item">
-        <input type="checkbox" name="source" value="${s.id}" checked />
-        ${s.name}
-      </label>`
-      )
-      .join("");
-  } catch {
-    sourceList.innerHTML = '<p style="color:var(--danger)">טעינת מקורות נכשלה</p>';
-  }
-}
 
 function fmt(n) {
   return n == null ? "—" : Number(n).toLocaleString("he-IL");
 }
 
+// Collect form fields into URL query params.
 function buildQuery() {
   const fd = new FormData(form);
   const params = new URLSearchParams();
   for (const key of ["make", "model", "yearMin", "yearMax", "priceMin", "priceMax", "kmMax", "handMax", "city", "text", "sort"]) {
     const v = fd.get(key);
-    if (v) params.set(key, v);
+    if (v) params.set(key, v.trim());
   }
-  const sources = fd.getAll("source");
-  if (sources.length) params.set("sources", sources.join(","));
   return params;
 }
 
-function renderStatus(data) {
-  const summary = `<span class="status-pill summary-pill">📋 ${fmt(data.total)} מודעות (${fmt(data.rawTotal)} לפני איחוד כפילויות)</span>`;
-  const pills = data.sources
-    .map((s) => {
-      const label = STATUS_LABEL[s.status] || s.status;
-      const title = s.message ? ` title="${s.message.replace(/"/g, "'")}"` : "";
-      return `<span class="status-pill"${title}>
-        <span class="dot ${s.status}"></span>${s.name}: ${fmt(s.count)} · ${label}
-      </span>`;
-    })
-    .join("");
-  statusBar.innerHTML = summary + pills;
+// Short human summary of the active criteria, shown above the buttons.
+function criteriaSummary() {
+  const fd = new FormData(form);
+  const bits = [];
+  if (fd.get("make")) bits.push(fd.get("make"));
+  if (fd.get("model")) bits.push(fd.get("model"));
+  if (fd.get("yearMin") || fd.get("yearMax")) bits.push(`${fd.get("yearMin") || ""}–${fd.get("yearMax") || ""}`);
+  if (fd.get("priceMax")) bits.push(`עד ${fmt(fd.get("priceMax"))} ₪`);
+  if (fd.get("kmMax")) bits.push(`עד ${fmt(fd.get("kmMax"))} ק"מ`);
+  if (fd.get("city")) bits.push(fd.get("city"));
+  if (fd.get("text")) bits.push(fd.get("text"));
+  return bits.join(" · ") || "כל הרכבים";
 }
+
+// --- Primary: per-site search links -----------------------------------------
+
+async function buildLinks(e) {
+  if (e) e.preventDefault();
+  statusBar.innerHTML = "";
+  grid.innerHTML = "";
+  linksBtn.disabled = true;
+  linksArea.innerHTML = '<div class="loading"><div class="spinner"></div>בונה קישורים...</div>';
+
+  try {
+    const res = await fetch(`/api/links?${buildQuery().toString()}`);
+    const data = await res.json();
+    const buttons = data.links
+      .map(
+        (l) => `
+      <a class="site-link" href="${l.url}" target="_blank" rel="noopener">
+        <span class="site-icon">${l.icon || "🔎"}</span>
+        <span class="site-name">${l.name}</span>
+        <span class="site-mode ${l.mode}">${MODE_LABEL[l.mode] || l.mode}</span>
+        <span class="site-go">פתח ↗</span>
+      </a>`
+      )
+      .join("");
+    linksArea.innerHTML = `
+      <div class="links-header">
+        <h2>חיפוש מוכן — ${criteriaSummary()}</h2>
+        <p class="hint">הקישו על אתר כדי לפתוח אצלו את החיפוש המסונן (נפתח בלשונית חדשה).</p>
+      </div>
+      <div class="site-links">${buttons}</div>`;
+  } catch (err) {
+    linksArea.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">בניית הקישורים נכשלה: ${err.message}</p></div>`;
+  } finally {
+    linksBtn.disabled = false;
+  }
+}
+
+// --- Secondary: aggregated demo/live results --------------------------------
 
 function card(l) {
   const specs = [
@@ -71,20 +89,10 @@ function card(l) {
     l.gearbox,
     l.fuel,
     l.city && `📍 ${l.city}`,
-  ]
-    .filter(Boolean)
-    .map((s) => `<span>${s}</span>`)
-    .join("");
+  ].filter(Boolean).map((s) => `<span>${s}</span>`).join("");
 
-  const badge = l.live
-    ? '<span class="badge-live">חי</span>'
-    : '<span class="badge-sample">דוגמה</span>';
-
-  const alsoOn =
-    l.alsoOn && l.alsoOn.length
-      ? `<div class="also-on">מופיע גם ב: ${l.alsoOn.join(", ")}</div>`
-      : "";
-
+  const badge = l.live ? '<span class="badge-live">חי</span>' : '<span class="badge-sample">דוגמה</span>';
+  const alsoOn = l.alsoOn && l.alsoOn.length ? `<div class="also-on">מופיע גם ב: ${l.alsoOn.join(", ")}</div>` : "";
   const img = l.image
     ? `<img class="card-img" src="${l.image}" alt="${l.title}" loading="lazy" onerror="this.style.visibility='hidden'" />`
     : '<div class="card-img"></div>';
@@ -105,79 +113,33 @@ function card(l) {
   </article>`;
 }
 
-function renderResults(data) {
-  if (!data.listings.length) {
-    grid.innerHTML = '<div class="empty-state"><p>לא נמצאו מודעות שתואמות את החיפוש. נסו להרחיב את המאפיינים.</p></div>';
-    return;
-  }
-  grid.innerHTML = data.listings.map(card).join("");
-}
-
-async function runSearch(e) {
-  e.preventDefault();
-  searchBtn.disabled = true;
-  searchBtn.textContent = "מחפש...";
+async function runDemo() {
+  demoBtn.disabled = true;
+  linksArea.innerHTML = "";
   statusBar.innerHTML = "";
-  grid.innerHTML = '<div class="loading"><div class="spinner"></div>אוסף מודעות מכל האתרים...</div>';
-
+  grid.innerHTML = '<div class="loading"><div class="spinner"></div>אוסף מודעות...</div>';
   try {
     const res = await fetch(`/api/search?${buildQuery().toString()}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    renderStatus(data);
-    renderResults(data);
+    const summary = `<span class="status-pill summary-pill">📋 ${fmt(data.total)} מודעות (דמו/חי)</span>`;
+    statusBar.innerHTML =
+      summary +
+      data.sources
+        .map(
+          (s) =>
+            `<span class="status-pill" title="${(s.message || "").replace(/"/g, "'")}"><span class="dot ${s.status}"></span>${s.name}: ${fmt(s.count)}</span>`
+        )
+        .join("");
+    grid.innerHTML = data.listings.length
+      ? data.listings.map(card).join("")
+      : '<div class="empty-state"><p>לא נמצאו מודעות. נסו להרחיב את המאפיינים.</p></div>';
   } catch (err) {
-    grid.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">החיפוש נכשל: ${err.message}</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><p style="color:var(--danger)">${err.message}</p></div>`;
   } finally {
-    searchBtn.disabled = false;
-    searchBtn.textContent = "🔎 חפש בכל האתרים";
+    demoBtn.disabled = false;
   }
 }
 
-// --- Connectivity diagnostics ------------------------------------------------
-
-const healthBtn = document.getElementById("health-btn");
-const healthPanel = document.getElementById("health-panel");
-
-const KIND_LABEL = {
-  reachable: "✅ נגיש",
-  blocked: "🚫 חסום (אנטי-בוט)",
-  policy_blocked: "🔒 חסום ע\"י מדיניות הרשת",
-  timeout: "⏱️ פסק זמן",
-  dns_error: "❓ DNS",
-  http_error: "⚠️ שגיאת HTTP",
-  network_error: "📡 שגיאת רשת",
-  no_endpoint: "—",
-};
-
-async function checkHealth() {
-  healthPanel.hidden = false;
-  healthPanel.innerHTML = '<div class="spinner"></div>';
-  try {
-    const res = await fetch("/api/health");
-    const h = await res.json();
-    const rows = h.sources
-      .map((s) => {
-        const label = KIND_LABEL[s.kind] || s.kind;
-        const live = s.liveEnabled ? "מצב חי פעיל" : "דוגמאות";
-        return `<div class="health-row">${s.name}: ${label} <span style="color:var(--muted)">· ${live}${s.ms != null ? " · " + s.ms + "ms" : ""}</span></div>`;
-      })
-      .join("");
-    healthPanel.innerHTML = `
-      <h3>בדיקת חיבור למקורות</h3>
-      ${rows}
-      <div class="health-meta">
-        מנוע דפדפן (Playwright): ${h.browserEngine ? "✅ זמין" : "❌ לא מותקן"}<br>
-        מנוע יד2: ${h.yad2Engine} · פרוקסי: ${h.proxy}<br>
-        ${h.sources.some((s) => s.kind === "policy_blocked")
-          ? '<strong style="color:var(--warn)">אתרים חסומים ע"י מדיניות הרשת של הסביבה — מודעות חיות יעבדו בהרצה מקומית או בסביבה שמתירה את הדומיינים.</strong>'
-          : ""}
-      </div>`;
-  } catch (err) {
-    healthPanel.innerHTML = `<span style="color:var(--danger)">בדיקת חיבור נכשלה: ${err.message}</span>`;
-  }
-}
-
-healthBtn.addEventListener("click", checkHealth);
-form.addEventListener("submit", runSearch);
-loadSources();
+form.addEventListener("submit", buildLinks);
+demoBtn.addEventListener("click", runDemo);

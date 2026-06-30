@@ -7,6 +7,7 @@ import path from "node:path";
 import { search, listSources, checkHealth } from "./src/aggregator.js";
 import { toNumber } from "./src/normalize.js";
 import { closeBrowser } from "./src/providers/browser.js";
+import { buildLinks } from "./src/searchLinks.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -67,6 +68,11 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === "/api/sources") {
     return sendJson(res, 200, { sources: listSources() });
+  }
+
+  if (url.pathname === "/api/links") {
+    const criteria = parseCriteria(url.searchParams);
+    return sendJson(res, 200, { query: criteria, links: buildLinks(criteria) });
   }
 
   if (url.pathname === "/api/health") {

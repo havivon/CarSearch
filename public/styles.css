@@ -134,6 +134,44 @@ form input:focus, form select:focus {
 
 .results { min-height: 60vh; }
 
+/* Primary feature: per-site search-link buttons */
+.links-header h2 { margin: 0 0 4px; font-size: 18px; }
+.links-header .hint { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+
+.site-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.site-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--text);
+  transition: transform .12s, border-color .12s, background .12s;
+}
+.site-link:hover, .site-link:active {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.site-icon { font-size: 26px; }
+.site-name { font-size: 16px; font-weight: 600; flex: 1; }
+.site-mode {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.site-mode.native { color: var(--accent-2); border: 1px solid var(--accent-2); }
+.site-mode.site-search { color: var(--muted); border: 1px solid var(--border); }
+.site-go { color: var(--accent); font-weight: 700; font-size: 14px; }
+
 .status-bar {
   display: flex;
   flex-wrap: wrap;

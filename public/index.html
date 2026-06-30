@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CarSearch — חיפוש רכבים מכל האתרים</title>
+  <title>CarSearch — חיפוש רכב בכל האתרים בלחיצה אחת</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>" />
 </head>
@@ -13,7 +13,7 @@
       <span class="logo">🚗</span>
       <div>
         <h1>CarSearch</h1>
-        <p class="tagline">מודעות רכב מיד2, WinWin, Marketplace ועוד — בחיפוש אחד</p>
+        <p class="tagline">מסננים פעם אחת — פותחים חיפוש מוכן בכל אתר בלחיצה</p>
       </div>
     </div>
   </header>
@@ -21,7 +21,7 @@
   <main class="layout">
     <aside class="filters">
       <form id="search-form">
-        <h2>חיפוש לפי מאפיינים</h2>
+        <h2>מה אתם מחפשים?</h2>
 
         <label>יצרן
           <input type="text" name="make" list="makes" placeholder="לדוגמה: מאזדה" />
@@ -32,6 +32,8 @@
           <option value="סקודה"></option><option value="פולקסווגן"></option>
           <option value="מיצובישי"></option><option value="ניסאן"></option>
           <option value="הונדה"></option><option value="סוזוקי"></option>
+          <option value="מרצדס"></option><option value="ב.מ.וו"></option>
+          <option value="אאודי"></option><option value="פורד"></option>
         </datalist>
 
         <label>דגם
@@ -40,28 +42,28 @@
 
         <div class="row">
           <label>שנה מ-
-            <input type="number" name="yearMin" min="1990" max="2026" placeholder="2015" />
+            <input type="number" name="yearMin" min="1990" max="2026" placeholder="2015" inputmode="numeric" />
           </label>
           <label>עד
-            <input type="number" name="yearMax" min="1990" max="2026" placeholder="2022" />
+            <input type="number" name="yearMax" min="1990" max="2026" placeholder="2022" inputmode="numeric" />
           </label>
         </div>
 
         <div class="row">
           <label>מחיר מ-
-            <input type="number" name="priceMin" min="0" step="1000" placeholder="30000" />
+            <input type="number" name="priceMin" min="0" step="1000" placeholder="30000" inputmode="numeric" />
           </label>
           <label>עד
-            <input type="number" name="priceMax" min="0" step="1000" placeholder="120000" />
+            <input type="number" name="priceMax" min="0" step="1000" placeholder="120000" inputmode="numeric" />
           </label>
         </div>
 
         <div class="row">
           <label>ק"מ עד
-            <input type="number" name="kmMax" min="0" step="5000" placeholder="120000" />
+            <input type="number" name="kmMax" min="0" step="5000" placeholder="120000" inputmode="numeric" />
           </label>
           <label>יד עד
-            <input type="number" name="handMax" min="1" max="10" placeholder="2" />
+            <input type="number" name="handMax" min="1" max="10" placeholder="2" inputmode="numeric" />
           </label>
         </div>
 
@@ -73,38 +75,26 @@
           <input type="text" name="text" placeholder="מילות מפתח..." />
         </label>
 
-        <fieldset class="sources">
-          <legend>אתרים</legend>
-          <div id="source-list"><!-- filled by JS --></div>
-        </fieldset>
-
-        <label>מיון
-          <select name="sort">
-            <option value="price_asc">מחיר — מהזול ליקר</option>
-            <option value="price_desc">מחיר — מהיקר לזול</option>
-            <option value="year_desc">שנה — מהחדש לישן</option>
-            <option value="km_asc">ק"מ — מהנמוך לגבוה</option>
-          </select>
-        </label>
-
-        <button type="submit" id="search-btn">🔎 חפש בכל האתרים</button>
-        <button type="button" id="health-btn" class="secondary-btn">🩺 בדוק חיבור למקורות</button>
+        <button type="submit" id="links-btn">🔗 פתח חיפוש בכל האתרים</button>
+        <button type="button" id="demo-btn" class="secondary-btn">👁️ תצוגה מאוחדת (דמו)</button>
       </form>
-      <div id="health-panel" class="health-panel" hidden></div>
     </aside>
 
     <section class="results">
-      <div id="status-bar" class="status-bar"></div>
-      <div id="results-grid" class="grid">
+      <div id="links-area">
         <div class="empty-state">
-          <p>הזינו מאפיינים ולחצו <strong>חפש</strong> כדי לקבל מודעות מכל האתרים יחד.</p>
+          <p>מלאו מאפיינים ולחצו <strong>פתח חיפוש בכל האתרים</strong>.<br>
+          תקבלו כפתור לכל אתר — כל לחיצה פותחת חיפוש מסונן ומוכן באותו אתר.</p>
         </div>
       </div>
+      <div id="status-bar" class="status-bar"></div>
+      <div id="results-grid" class="grid"></div>
     </section>
   </main>
 
   <footer class="footer">
-    <p>מצרף תוצאות ממספר מקורות. נתונים מסומנים כ"דוגמה" כאשר המקור החי חסום או דורש התחברות.</p>
+    <p>הקישורים מובילים לעמודי החיפוש האמיתיים בכל אתר — תמיד מעודכן, אף פעם לא נשבר.
+    מקור עם מסנן מובנה מסומן "חיפוש מסונן"; היתר נפתחים כחיפוש ממוקד באתר.</p>
   </footer>
 
   <script src="/app.js"></script>

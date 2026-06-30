@@ -4,8 +4,9 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { search, listSources } from "./src/aggregator.js";
+import { search, listSources, checkHealth } from "./src/aggregator.js";
 import { toNumber } from "./src/normalize.js";
+import { closeBrowser } from "./src/providers/browser.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -68,6 +69,14 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { sources: listSources() });
   }
 
+  if (url.pathname === "/api/health") {
+    try {
+      return sendJson(res, 200, await checkHealth());
+    } catch (err) {
+      return sendJson(res, 500, { error: String(err.message || err) });
+    }
+  }
+
   if (url.pathname === "/api/search") {
     try {
       const criteria = parseCriteria(url.searchParams);
@@ -87,3 +96,10 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`CarSearch aggregator running on http://localhost:${PORT}`);
 });
+
+for (const sig of ["SIGINT", "SIGTERM"]) {
+  process.on(sig, async () => {
+    await closeBrowser();
+    server.close(() => process.exit(0));
+  });
+}

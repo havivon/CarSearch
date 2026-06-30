@@ -107,6 +107,31 @@ form input:focus, form select:focus {
 #search-btn:hover { background: #2563eb; }
 #search-btn:disabled { opacity: .6; cursor: default; }
 
+.secondary-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.secondary-btn:hover { border-color: var(--accent); }
+
+.health-panel {
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 12.5px;
+}
+.health-panel h3 { margin: 0 0 8px; font-size: 14px; }
+.health-row { display: flex; align-items: center; gap: 7px; margin: 5px 0; }
+.health-meta { color: var(--muted); margin-top: 8px; font-size: 11.5px; line-height: 1.6; }
+
 .results { min-height: 60vh; }
 
 .status-bar {

@@ -134,5 +134,50 @@ async function runSearch(e) {
   }
 }
 
+// --- Connectivity diagnostics ------------------------------------------------
+
+const healthBtn = document.getElementById("health-btn");
+const healthPanel = document.getElementById("health-panel");
+
+const KIND_LABEL = {
+  reachable: "✅ נגיש",
+  blocked: "🚫 חסום (אנטי-בוט)",
+  policy_blocked: "🔒 חסום ע\"י מדיניות הרשת",
+  timeout: "⏱️ פסק זמן",
+  dns_error: "❓ DNS",
+  http_error: "⚠️ שגיאת HTTP",
+  network_error: "📡 שגיאת רשת",
+  no_endpoint: "—",
+};
+
+async function checkHealth() {
+  healthPanel.hidden = false;
+  healthPanel.innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await fetch("/api/health");
+    const h = await res.json();
+    const rows = h.sources
+      .map((s) => {
+        const label = KIND_LABEL[s.kind] || s.kind;
+        const live = s.liveEnabled ? "מצב חי פעיל" : "דוגמאות";
+        return `<div class="health-row">${s.name}: ${label} <span style="color:var(--muted)">· ${live}${s.ms != null ? " · " + s.ms + "ms" : ""}</span></div>`;
+      })
+      .join("");
+    healthPanel.innerHTML = `
+      <h3>בדיקת חיבור למקורות</h3>
+      ${rows}
+      <div class="health-meta">
+        מנוע דפדפן (Playwright): ${h.browserEngine ? "✅ זמין" : "❌ לא מותקן"}<br>
+        מנוע יד2: ${h.yad2Engine} · פרוקסי: ${h.proxy}<br>
+        ${h.sources.some((s) => s.kind === "policy_blocked")
+          ? '<strong style="color:var(--warn)">אתרים חסומים ע"י מדיניות הרשת של הסביבה — מודעות חיות יעבדו בהרצה מקומית או בסביבה שמתירה את הדומיינים.</strong>'
+          : ""}
+      </div>`;
+  } catch (err) {
+    healthPanel.innerHTML = `<span style="color:var(--danger)">בדיקת חיבור נכשלה: ${err.message}</span>`;
+  }
+}
+
+healthBtn.addEventListener("click", checkHealth);
 form.addEventListener("submit", runSearch);
 loadSources();
